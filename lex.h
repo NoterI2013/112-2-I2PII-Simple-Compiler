@@ -9,15 +9,20 @@
  */
 typedef enum token_set_t {
     UNKNOWN,
-    END,
-    ENDFILE,
-    INT,
-    ID,      // variable system
-    ADDSUB,  // + - (binary | unary)
-    MULDIV,  // * /
-    ASSIGN,  // = += -= *= /= %= |= &= ^=
-    LPAREN,  // (
-    RPAREN   // )
+    END,            // \n
+    ENDFILE,        // EOF
+    ASSIGN,         // =
+    ADDSUB_ASSIGN,  // += -=
+    OR,             // |
+    XOR,            // ^
+    AND,            // &
+    ADDSUB,         // + -
+    MULDIV,         // * /
+    INCDEC,         // ++ --
+    INT,            // integer
+    ID,             // variable
+    LPAREN,         // (
+    RPAREN          // )
 } TokenSet;
 
 /**

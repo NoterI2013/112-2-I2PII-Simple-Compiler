@@ -51,6 +51,9 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-#
+# project develop
 .env
 .commitMsg
+.vscode/
+.idea/
+cmake-build-debug/
