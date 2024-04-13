@@ -374,14 +374,58 @@ BTNode* muldiv_expr_tail(BTNode* left) {
     }
 }
 
-// unary_expr := ADDSUB unary_expr | factor
+// unary_expr := ADDSUB unary_expr | factor := <+->*n factor
 BTNode* unary_expr(void) {
+    int negative_switch = 0;
+    while(match(ADDSUB)){
+        negative_switch ^= getLexeme()[0] == '-';
+        advance();
+    }
+    BTNode* right = factor();
+    if(negative_switch){
+        BTNode* parentRoot = makeNode(ADDSUB, "-");
+        parentRoot->left = makeNode(INT, "0");
+        parentRoot->right= right;
+        return parentRoot;
+    }else{
+        return right;
+    }
 
 }
 
 // factor := INT | ID | INCDEC ID | LPAREN assign_expr RPAREN
 BTNode* factor(void) {
-
+    BTNode *localRoot = NULL;
+    if (match(INT)) {
+        localRoot = makeNode(INT, getLexeme());
+        advance();
+    } else if (match(ID)) {
+        localRoot = makeNode(ID, getLexeme());
+        advance();
+    } else if (match(INCDEC)){
+        char addsub_operation = getLexeme()[0];
+        advance();
+        BTNode* next = factor();
+        if (next->data == ID) {
+            localRoot = makeNode(ASSIGN, "=");
+            localRoot->left = next;
+            localRoot->right = makeNode(ADDSUB, (char[2]){ addsub_operation, '\0' });
+            localRoot->right->left = makeNode(ID, next->lexeme);
+            localRoot->right->right = makeNode(INT, "1");
+        } else {
+            err(SYNTAXERR);
+        }
+    } else if (match(LPAREN)){
+        advance();
+        localRoot = assign_expr();
+        if (match(RPAREN))
+            advance();
+        else
+            err(SYNTAXERR);
+    } else {
+        err(NOTNUMID);
+    }
+    return localRoot;
 }
 
 void err(ErrorType errorNum) {
