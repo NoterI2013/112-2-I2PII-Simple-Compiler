@@ -20,6 +20,9 @@ int evaluateTree(BTNode *root) {
                 break;
             case ADDSUB:
             case MULDIV:
+            case AND:
+            case OR:
+            case XOR:
                 lv = evaluateTree(root->left);
                 rv = evaluateTree(root->right);
                 if (strcmp(root->lexeme, "+") == 0) {
@@ -32,6 +35,12 @@ int evaluateTree(BTNode *root) {
                     if (rv == 0)
                         error(DIVZERO);
                     retval = lv / rv;
+                }else if (strcmp(root->lexeme, "&") == 0) {
+                    retval = lv & rv;
+                }else if (strcmp(root->lexeme, "|") == 0) {
+                    retval = lv | rv;
+                }else if (strcmp(root->lexeme, "^") == 0) {
+                    retval = lv ^ rv;
                 }
                 break;
             default:
