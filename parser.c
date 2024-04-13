@@ -74,6 +74,22 @@ int getval(char* str) {
     return 0;
 }
 
+int getMemPos(char* str){
+    for (int i=0; i < sbcount; i++){
+        if (strcmp(str, table[i].name) == 0){
+            return i*4;
+        }
+    }
+    
+    if (sbcount >= TBLSIZE)
+    error(RUNOUT);
+
+    strcpy(table[sbcount].name, str);
+    table[sbcount].val = 0;
+    sbcount++;
+    return (sbcount-1)*4;
+}
+
 int setval(char* str, int val) {
     int i = 0;
 
@@ -98,6 +114,8 @@ BTNode* makeNode(TokenSet tok, const char* lexe) {
     strcpy(node->lexeme, lexe);
     node->data = tok;
     node->val = 0;
+    node->reg = NOREG;
+    node->ready = 0;
     node->left = NULL;
     node->right = NULL;
     return node;
@@ -231,6 +249,7 @@ void statement(void) {
     BTNode* retp = NULL;
 
     if (match(ENDFILE)) {
+        fprintf(stdout, "EXIT 0\n");
         exit(0);
     } else if (match(END)) {
         printf(">> ");
@@ -238,12 +257,15 @@ void statement(void) {
     } else {
         retp = assign_expr();
         if (match(END)) {
-            printf("%d\n", evaluateTree(retp));
-            printf("Prefix traversal: ");
-            printPrefix(retp);
-            printf("\n");
+            // printf("%d\n", evaluateTree(retp));
+            // printf("Prefix traversal: ");
+            // printPrefix(retp);
+            // printf("\n");
+            initRegister();
+            assembly_Generator(retp);
+            // printf("\n");
             freeTree(retp);
-            printf(">> ");
+            // printf(">> ");
             advance();
         } else {
             error(SYNTAXERR);

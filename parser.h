@@ -3,6 +3,7 @@
 
 #include "lex.h"
 #define TBLSIZE 64
+#define NOREG -1
 
 /**
  * Set PRINTERR to 1 to print error message while calling error()
@@ -51,6 +52,8 @@ typedef struct {
 typedef struct _Node {
     TokenSet data;
     int val;
+    int reg;
+    int ready;
     char lexeme[MAXLEN];
     struct _Node *left;
     struct _Node *right;
@@ -74,6 +77,14 @@ extern void initTable(void);
  * @warning Will blame if exceed table capacity
  */
 extern int getval(char* str);
+
+/**
+ * Get the memory position of the an variable
+ * 
+ * @param str variable name
+ * @return position of the memory
+ */
+extern int getMemPos(char* str);
 
 /**
  * Set the value of variable stored in table
