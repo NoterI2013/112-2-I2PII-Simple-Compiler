@@ -129,138 +129,28 @@ void freeTree(BTNode* root) {
     }
 }
 
-//
-//// factor := INT |
-////           ADDSUB INT |
-////           ADDSUB ID  |
-////		   	 ADDSUB LPAREN expr RPAREN
-////		   	 ID |
-////		   	 ID ASSIGN expr |
-////		   	 LPAREN expr RPAREN |
-//BTNode* factor(void) {
-//    BTNode* retp = NULL, *left = NULL;
-//
-//    if (match(INT)) {
-//        // INT
-//        retp = makeNode(INT, getLexeme());
-//        advance();
-//    } else if (match(ID)) {
-//        left = makeNode(ID, getLexeme());
-//        advance();
-//        if (!match(ASSIGN)) {
-//            // ID
-//            retp = left;
-//        } else {
-//            // ID ASSIGN expr
-//            retp = makeNode(ASSIGN, getLexeme());
-//            advance();
-//            retp->left = left;
-//            retp->right = expr();
-//        }
-//    } else if (match(ADDSUB)) {
-//        retp = makeNode(ADDSUB, getLexeme());
-//        retp->left = makeNode(INT, "0");
-//        advance();
-//        if (match(INT)) {
-//            // ADDSUB INT
-//            retp->right = makeNode(INT, getLexeme());
-//            advance();
-//        } else if (match(ID)) {
-//            // ADDSUB ID
-//            retp->right = makeNode(ID, getLexeme());
-//            advance();
-//        } else if (match(LPAREN)) {
-//            // consume '('
-//            advance();
-//            // ADDSUB LPAREN expr RPAREN
-//            retp->right = expr();
-//            if (match(RPAREN))
-//                // consume ')'
-//                advance();
-//            else
-//                // souldpanic!()
-//            error(MISPAREN);
-//        } else {
-//            // unary operator with no expression on the right
-//            error(NOTNUMID);
-//        }
-//    } else if (match(LPAREN)) {
-//        // consume '('
-//        advance();
-//        // LPAREN expr RPAREN
-//        retp = expr();
-//        if (match(RPAREN))
-//            // consume ')'
-//            advance();
-//        else
-//            // souldpanic!()
-//        error(MISPAREN);
-//    } else {
-//        // factor must be the above case
-//        error(NOTNUMID);
-//    }
-//    return retp;
-//}
-//
-//// term := factor term_tail
-//BTNode* term(void) {
-//    BTNode* node = factor();
-//    return term_tail(node);
-//}
-//
-//// term_tail := MULDIV factor term_tail | NiL
-//BTNode* term_tail(BTNode* left) {
-//    BTNode* node = NULL;
-//
-//    if (match(MULDIV)) {
-//        node = makeNode(MULDIV, getLexeme());
-//        advance();
-//        node->left = left;
-//        node->right = factor();
-//        return term_tail(node);
-//    } else {
-//        return left;
-//    }
-//}
-//
-//// expr := term expr_tail
-//BTNode* expr(void) {
-//    BTNode* node = term();
-//    return expr_tail(node);
-//}
-//
-//// expr_tail := ADDSUB term expr_tail | NiL
-//BTNode* expr_tail(BTNode* left) {
-//    BTNode* node = NULL;
-//
-//    if (match(ADDSUB)) {
-//        node = makeNode(ADDSUB, getLexeme());
-//        advance();
-//        node->left = left;
-//        node->right = term();
-//        return expr_tail(node);
-//    } else {
-//        return left;
-//    }
-//}
-
 // statement := ENDFILE | END | expr END
 void statement(void) {
     BTNode* retp = NULL;
 
     if (match(ENDFILE)) {
+        for(int i=0; i<3; i++){
+            fprintf(stdout, "MOV r%d, [%d]\n", i, i*4);
+        }
         fprintf(stdout, "EXIT 0\n");
         exit(0);
     } else if (match(END)) {
-        printf(">> ");
+//        printf(">> ");
         advance();
     } else {
         retp = assign_expr();
         if (match(END)) {
-            // printf("%d\n", evaluateTree(retp));
-            // printf("Prefix traversal: ");
-            // printPrefix(retp);
-            // printf("\n");
+            evaluateTree(retp);
+            if(PRINTERR){
+                printf("Prefix traversal: ");
+                printPrefix(retp);
+                printf("\n");
+            }
             initRegister();
             assembly_Generator(retp);
             // printf("\n");
@@ -279,7 +169,7 @@ BTNode* assign_expr(){
     BTNode* left = or_expr();
     BTNode* parent = NULL;
     if(match(ASSIGN) || match(ADDSUB_ASSIGN)){
-        if(left->data != ID) err(SYNTAXERR);
+        if(left->data != ID) err(NOTLVAL);
     }else{
         // if not an assignment, the parsing terminate...
         return left;
@@ -480,5 +370,6 @@ void err(ErrorType errorNum) {
                 break;
         }
     }
+    fprintf(stdout, "EXIT %d", 1);
     exit(0);
 }

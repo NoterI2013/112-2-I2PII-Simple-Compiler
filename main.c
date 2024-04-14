@@ -30,7 +30,7 @@
 
 int main() {
     initTable();
-    printf(">> ");
+    // printf(">> ");
     while (1) {
         statement();
     }
