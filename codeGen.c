@@ -62,10 +62,10 @@ void initRegister(){
 static int reglloc(BTNode *node){
     switch(node->data){
         case INT:
-            fprintf(stdout, "MOV r%d, %d\n", regIdc++, node->val);    
+            fprintf(stdout, "MOV r%d %d\n", regIdc++, node->val);    
         break;
         case ID:
-            fprintf(stdout, "MOV r%d, [%d]\n", regIdc++, node->val);    
+            fprintf(stdout, "MOV r%d [%d]\n", regIdc++, node->val);    
         break;
     }
     return regIdc-1;
@@ -82,14 +82,15 @@ static void arithmetic(BTNode *root){
         break;
         case '-':
             fprintf(stdout, "SUB r%d r%d\n", root->left->reg, root->right->reg);
-            if(root->right->reg == small) fprintf(stdout, "MOV r%d, r%d\n", small, large);    
+            if(root->right->reg == small) fprintf(stdout, "MOV r%d r%d\n", small, large);    
         break;
         case '*':
             fprintf(stdout, "MUL r%d r%d\n", small, large);
         break;
         case '/':
+            if(evaluateTree(root->right) == 0) err(DIVZERO);
             fprintf(stdout, "DIV r%d r%d\n", root->left->reg, root->right->reg);
-            if(root->right->reg == small) fprintf(stdout, "MOV r%d, r%d\n", small, large);    
+            if(root->right->reg == small) fprintf(stdout, "MOV r%d r%d\n", small, large);    
         break;
         case '&':
             fprintf(stdout, "AND r%d r%d\n", small, large);
@@ -111,7 +112,8 @@ static void assignment(BTNode *root){
     // fprintf(stdout, "MOV r%d, %d\n", regIdc++, evaluateTree(root->right));
     root->right->reg = regIdc-1;
     // if(root->left->reg == NOREG) root->left->reg = reglloc(root->left);
-    fprintf(stdout, "MOV [%d], r%d\n", root->left->val, root->right->reg);
+    setval(root->left->lexeme, evaluateTree(root->right));
+    fprintf(stdout, "MOV [%d] r%d\n", root->left->val, root->right->reg);
     root->reg = root->right->reg;
 }
 
@@ -141,6 +143,19 @@ void assembly_Generator(BTNode* root){
     else arithmetic(root);
 }
 #undef isleaf
+
+void puring_assembly(BTNode* root){
+    if(root == NULL) return;
+
+    if(root->data == MULDIV && root->lexeme[0] == '/'){
+        if(evaluateTree(root->right) == 0) err(DIVZERO);
+    }else if(root->data == ASSIGN){
+        assembly_Generator(root);
+    }else{
+        puring_assembly(root->left);
+        puring_assembly(root->right);
+    }
+}
 
 void printPrefix(BTNode *root) {
     if (root != NULL) {
