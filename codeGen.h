@@ -6,12 +6,13 @@
 #define REGISTER_DEFAULT 0
 
 // Evaluate the syntax tree
-extern int evaluateTree(BTNode *root);
+int evaluateTree(BTNode *root);
 
 // Print the syntax tree in prefix
-extern void printPrefix(BTNode *root);
+void printPrefix(BTNode *root);
 
-extern void initRegister();
-extern void assembly_Generator(BTNode* root);
+void initRegister();
+// void assembly_Generator(BTNode* root);
+void puring_assembly(BTNode* root);
 
 #endif // __CODEGEN__
