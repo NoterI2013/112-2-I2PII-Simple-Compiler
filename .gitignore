@@ -61,3 +61,4 @@ cmake-build-debug/
 *opt
 *utility.c
 tests/
+merge/

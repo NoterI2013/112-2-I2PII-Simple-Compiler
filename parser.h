@@ -62,12 +62,12 @@ typedef struct _Node {
 /**
  * The symbol table
  */
-extern Symbol table[TBLSIZE];
+Symbol table[TBLSIZE];
 
 /**
  * There would be `x/y/z` symbol initially, value is `0`
  */
-extern void initTable(void);
+void initTable(void);
 
 /**
  * Get the value of variable stored in table
@@ -76,7 +76,7 @@ extern void initTable(void);
  * @returns value of variable
  * @warning Will blame if exceed table capacity
  */
-extern int getval(char* str);
+int getval(char* str);
 
 /**
  * Get the memory position of the an variable
@@ -84,7 +84,7 @@ extern int getval(char* str);
  * @param str variable name
  * @return position of the memory
  */
-extern int getMemPos(char* str);
+int getMemPos(char* str);
 
 /**
  * Set the value of variable stored in table
@@ -94,7 +94,7 @@ extern int getMemPos(char* str);
  * @returns value of variable
  * @warning Will blame if exceed table capacity
  */
-extern int setval(char* str, int val);
+int setval(char* str, int val);
 
 /**
  * Make a new node according to token type and lexeme
@@ -102,37 +102,30 @@ extern int setval(char* str, int val);
  * @param lexe
  * @returns ast node
  */
-extern BTNode* makeNode(TokenSet tok, const char* lexe);
+BTNode* makeNode(TokenSet tok, const char* lexe);
 
 /**
  * Free the syntax tree
  */
-extern void freeTree(BTNode *root);
+void freeTree(BTNode *root);
 
-extern BTNode* factor(void);
-extern BTNode* term(void);
-extern BTNode* term_tail(BTNode *left);
-extern BTNode* expr(void);
-extern BTNode* expr_tail(BTNode *left);
-extern void statement(void);
-
-extern void statement(void);
-extern BTNode* assign_expr(void);
-extern BTNode* or_expr(void);
-extern BTNode* or_expr_tail(BTNode* left);
-extern BTNode* xor_expr(void);
-extern BTNode* xor_expr_tail(BTNode* left);
-extern BTNode* and_expr(void);
-extern BTNode* and_expr_tail(BTNode* left);
-extern BTNode* addsub_expr(void);
-extern BTNode* addsub_expr_tail(BTNode* left);
-extern BTNode* muldiv_expr(void);
-extern BTNode* muldiv_expr_tail(BTNode* left);
-extern BTNode* unary_expr(void);
-extern BTNode* factor(void);
+void statement(void);
+BTNode* assign_expr(void);
+BTNode* or_expr(void);
+BTNode* or_expr_tail(BTNode* left);
+BTNode* xor_expr(void);
+BTNode* xor_expr_tail(BTNode* left);
+BTNode* and_expr(void);
+BTNode* and_expr_tail(BTNode* left);
+BTNode* addsub_expr(void);
+BTNode* addsub_expr_tail(BTNode* left);
+BTNode* muldiv_expr(void);
+BTNode* muldiv_expr_tail(BTNode* left);
+BTNode* unary_expr(void);
+BTNode* factor(void);
 
 
 // Print error message and exit the program
-extern void err(ErrorType errorNum);
+void err(ErrorType errorNum);
 
 #endif // __PARSER__

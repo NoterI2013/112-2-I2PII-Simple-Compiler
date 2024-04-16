@@ -30,17 +30,17 @@ typedef enum token_set_t {
  * @param token
  * @returns `(1|0)` as `true|false`
  */
-extern int match(TokenSet token);
+int match(TokenSet token);
 
 /**
  * Get the next token stored in `lexeme`
  */
-extern void advance(void);
+void advance(void);
 
 /**
  * Get the lexeme of the current token
  * @returns `lexeme` string (representing a token detail)
  */
-extern char* getLexeme(void);
+char* getLexeme(void);
 
 #endif // __LEX__
