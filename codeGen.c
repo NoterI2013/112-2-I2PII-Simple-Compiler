@@ -37,9 +37,15 @@ int evaluateTree(BTNode *root) {
                 } else if (strcmp(root->lexeme, "*") == 0) {
                     retval = lv * rv;
                 } else if (strcmp(root->lexeme, "/") == 0) {
-                    if (rv == 0)
-                        error(DIVZERO);
-                    retval = lv / rv;
+                    // if (root->right->data == INT){
+                    //     if(rv == 0) err(DIVZERO);
+                    //     else retval = lv / rv;
+                    // }else{
+                    //     if(rv == 0) retval = lv;
+                    //     else retval = lv / rv;
+                    // }
+                    if(root->right->data == INT && rv == 0) err(DIVZERO);
+                    retval = (rv==0)? lv : lv/rv;
                 }else if (strcmp(root->lexeme, "&") == 0) {
                     retval = lv & rv;
                 }else if (strcmp(root->lexeme, "|") == 0) {
@@ -88,7 +94,9 @@ static void arithmetic(BTNode *root){
             fprintf(stdout, "MUL r%d r%d\n", small, large);
         break;
         case '/':
-            if(evaluateTree(root->right) == 0) err(DIVZERO);
+            // if(root->right->data == INT && evaluateTree(root->right) == 0) {
+            //     err(DIVZERO);
+            // }
             fprintf(stdout, "DIV r%d r%d\n", root->left->reg, root->right->reg);
             if(root->right->reg == small) fprintf(stdout, "MOV r%d r%d\n", small, large);    
         break;
@@ -118,7 +126,7 @@ static void assignment(BTNode *root){
 }
 
 #define isleaf(root) (root->left == NULL && root->right == NULL)
-void assembly_Generator(BTNode* root){
+static void assembly_Generator(BTNode* root){
     if(isleaf(root)){
         root->ready = true;
         switch(root->data){
@@ -147,9 +155,10 @@ void assembly_Generator(BTNode* root){
 void puring_assembly(BTNode* root){
     if(root == NULL) return;
 
-    if(root->data == MULDIV && root->lexeme[0] == '/'){
-        if(evaluateTree(root->right) == 0) err(DIVZERO);
-    }else if(root->data == ASSIGN){
+    // if(root->data == MULDIV && root->lexeme[0] == '/'){
+    //     if(evaluateTree(root->right) == 0) err(DIVZERO);
+    // }else 
+    if(root->data == ASSIGN){
         assembly_Generator(root);
     }else{
         puring_assembly(root->left);
