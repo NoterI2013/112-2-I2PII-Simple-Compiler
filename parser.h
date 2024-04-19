@@ -62,7 +62,7 @@ typedef struct _Node {
 /**
  * The symbol table
  */
-Symbol table[TBLSIZE];
+extern Symbol table[TBLSIZE];
 
 /**
  * There would be `x/y/z` symbol initially, value is `0`

@@ -4,9 +4,8 @@
 #include "codeGen.h"
 #include <stdbool.h>
 
-#define max(a, b) ((a > b)? a : b)
-#define min(a, b) ((a < b)? a : b)
 static int regIdc = REGISTER_DEFAULT;
+static int memIdc = MEMORY_LIMITATION;
 
 int evaluateTree(BTNode *root) {
     int retval = 0, lv = 0, rv = 0;
@@ -37,13 +36,6 @@ int evaluateTree(BTNode *root) {
                 } else if (strcmp(root->lexeme, "*") == 0) {
                     retval = lv * rv;
                 } else if (strcmp(root->lexeme, "/") == 0) {
-                    // if (root->right->data == INT){
-                    //     if(rv == 0) err(DIVZERO);
-                    //     else retval = lv / rv;
-                    // }else{
-                    //     if(rv == 0) retval = lv;
-                    //     else retval = lv / rv;
-                    // }
                     if(root->right->data == INT && rv == 0) err(DIVZERO);
                     retval = (rv==0)? lv : lv/rv;
                 }else if (strcmp(root->lexeme, "&") == 0) {
@@ -65,101 +57,122 @@ void initRegister(){
     regIdc = REGISTER_DEFAULT;
 }
 
-static int reglloc(BTNode *node){
+static int ralloc(BTNode *node){
     switch(node->data){
         case INT:
-            fprintf(stdout, "MOV r%d %d\n", regIdc++, node->val);    
+            fprintf(stdout, "MOV r%d %s\n", regIdc++, node->lexeme);    
         break;
         case ID:
-            fprintf(stdout, "MOV r%d [%d]\n", regIdc++, node->val);    
+            fprintf(stdout, "MOV r%d [%d]\n", regIdc++, getMemPos(node->lexeme));    
         break;
     }
     return regIdc-1;
 }
 
-static void arithmetic(BTNode *root){
-    if(root-> left->reg == NOREG) root->left->reg  = reglloc(root->left);
-    if(root->right->reg == NOREG) root->right->reg = reglloc(root->right);
-    int small = min(root->left->reg, root->right->reg);
-    int large = max(root->left->reg, root->right->reg);
-    switch(root->lexeme[0]){
-        case '+':
-            fprintf(stdout, "ADD r%d r%d\n", small, large);
-        break;
-        case '-':
-            fprintf(stdout, "SUB r%d r%d\n", root->left->reg, root->right->reg);
-            if(root->right->reg == small) fprintf(stdout, "MOV r%d r%d\n", small, large);    
-        break;
-        case '*':
-            fprintf(stdout, "MUL r%d r%d\n", small, large);
-        break;
-        case '/':
-            // if(root->right->data == INT && evaluateTree(root->right) == 0) {
-            //     err(DIVZERO);
-            // }
-            fprintf(stdout, "DIV r%d r%d\n", root->left->reg, root->right->reg);
-            if(root->right->reg == small) fprintf(stdout, "MOV r%d r%d\n", small, large);    
-        break;
-        case '&':
-            fprintf(stdout, "AND r%d r%d\n", small, large);
-        break;
-        case '|':
-            fprintf(stdout, "OR r%d r%d\n", small, large);
-        break;
-        case '^':
-            fprintf(stdout, "XOR r%d r%d\n", small, large);
-        break;
-    }
-    root->reg = small;
-    root->ready = true;
+static void regfree(void){
     regIdc--;
 }
 
+static int max(int a, int b){
+    return a > b? a : b;
+}
+
+static int min(int a, int b){
+    return a < b? a : b;
+}
+
+static int depth(BTNode* root){
+    if(root == NULL) return 0;
+    else if(root->data == ASSIGN) return depth(root->right);
+    else return 1 + max(depth(root->left), depth(root->right));
+}
+
+static void assembly_Generator(BTNode* root);
+
+static void arithmetic(BTNode *root){
+    bool use_temp_reg = regIdc == 7;
+    if(use_temp_reg){
+        fprintf(stdout, "MOV [%d] r6\n", memIdc * 4);
+        regfree();
+        memIdc--;
+    }
+
+    if(depth(root->left) >= depth(root->right)){
+        assembly_Generator(root->left);
+        assembly_Generator(root->right);
+    }else{
+        assembly_Generator(root->right);
+        assembly_Generator(root->left);
+    }
+
+    int small = min(root->left->reg, root->right->reg);
+    int large = max(root->left->reg, root->right->reg);
+    int subjectReg = use_temp_reg? large : small;
+    int  objectReg = use_temp_reg? small : large;
+
+    switch(root->lexeme[0]){
+        case '+':
+            fprintf(stdout, "ADD r%d r%d\n", subjectReg, objectReg);
+        break;
+        case '-':
+            fprintf(stdout, "SUB r%d r%d\n", root->left->reg, root->right->reg);
+            if(root->right->reg == subjectReg) fprintf(stdout, "MOV r%d r%d\n", subjectReg, objectReg);    
+        break;
+        case '*':
+            fprintf(stdout, "MUL r%d r%d\n", subjectReg, objectReg);
+        break;
+        case '/':
+            fprintf(stdout, "DIV r%d r%d\n", root->left->reg, root->right->reg);
+            if(root->right->reg == subjectReg) fprintf(stdout, "MOV r%d r%d\n", subjectReg, objectReg);    
+        break;
+        case '&':
+            fprintf(stdout, "AND r%d r%d\n", subjectReg, objectReg);
+        break;
+        case '|':
+            fprintf(stdout, "OR r%d r%d\n", subjectReg, objectReg);
+        break;
+        case '^':
+            fprintf(stdout, "XOR r%d r%d\n", subjectReg, objectReg);
+        break;
+    }
+    // Up pass the subject register to current node
+    root->reg = subjectReg;
+
+    if(use_temp_reg) fprintf(stdout, "MOV r6 [%d]\n", ++memIdc * 4);
+    else regfree();
+}
+
 static void assignment(BTNode *root){
-    if(root->right->reg == NOREG) root->right->reg = reglloc(root->right);
-    // fprintf(stdout, "MOV r%d, %d\n", regIdc++, evaluateTree(root->right));
-    root->right->reg = regIdc-1;
-    // if(root->left->reg == NOREG) root->left->reg = reglloc(root->left);
-    setval(root->left->lexeme, evaluateTree(root->right));
-    fprintf(stdout, "MOV [%d] r%d\n", root->left->val, root->right->reg);
+    assembly_Generator(root->right);
+    fprintf(stdout, "MOV [%d] r%d\n", getMemPos(root->left->lexeme), root->right->reg);
     root->reg = root->right->reg;
 }
 
 #define isleaf(root) (root->left == NULL && root->right == NULL)
 static void assembly_Generator(BTNode* root){
-    if(isleaf(root)){
-        root->ready = true;
-        switch(root->data){
-            case INT:
-                root->val = atoi(root->lexeme);
-            break;
-            case ID:
-                root->val = getMemPos(root->lexeme);
-            break;
-        }
-        return;
-    }
-
-    if(root->left->ready == false){
-        assembly_Generator(root->left);
-    }
-    if(root->right->ready == false){
-        assembly_Generator(root->right);
-    }
+    if (root == NULL) return;
     
-    if(root->lexeme[0] == '=') assignment(root);
-    else arithmetic(root);
+    switch (root->data){
+        case INT:
+        case ID:
+            root->reg = ralloc(root);
+            break;
+        case ASSIGN:
+            assignment(root);
+            break;
+        default:
+            arithmetic(root);
+            break;
+    }
 }
 #undef isleaf
 
 void puring_assembly(BTNode* root){
     if(root == NULL) return;
 
-    // if(root->data == MULDIV && root->lexeme[0] == '/'){
-    //     if(evaluateTree(root->right) == 0) err(DIVZERO);
-    // }else 
     if(root->data == ASSIGN){
         assembly_Generator(root);
+        regfree();
     }else{
         puring_assembly(root->left);
         puring_assembly(root->right);

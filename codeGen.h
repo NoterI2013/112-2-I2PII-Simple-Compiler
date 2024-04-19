@@ -4,6 +4,7 @@
 #include "parser.h"
 
 #define REGISTER_DEFAULT 0
+#define MEMORY_LIMITATION 63
 
 // Evaluate the syntax tree
 int evaluateTree(BTNode *root);
